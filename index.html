@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find your way back — The Six Drifts Quiz</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #faf9f7; color: #111827; font-family: 'Georgia', serif; min-height: 100vh; }
+.quiz-wrap { max-width: 640px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+
+/* Header */
+.site-header { text-align: center; margin-bottom: 2.5rem; }
+.site-header .tag { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #9ca3af; font-family: sans-serif; margin-bottom: 0.5rem; }
+.site-header h1 { font-size: 26px; font-weight: normal; color: #1f1f1f; line-height: 1.35; }
+.site-header p { font-size: 15px; color: #6b7280; margin-top: 0.6rem; font-family: sans-serif; line-height: 1.6; }
+
+/* Progress */
+.progress-bar { height: 3px; background: #e5e7eb; border-radius: 2px; margin-bottom: 2rem; }
+.progress-fill { height: 100%; background: #7F77DD; border-radius: 2px; transition: width 0.4s ease; }
+
+/* Screens */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* Question */
+.q-label { font-size: 11px; color: #9ca3af; margin-bottom: 0.5rem; letter-spacing: 0.08em; text-transform: uppercase; font-family: sans-serif; }
+.q-text { font-size: 20px; color: #111827; line-height: 1.55; margin-bottom: 1.75rem; }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.opt { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1.5px solid #e5e7eb; border-radius: 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; font-family: sans-serif; }
+.opt:hover { border-color: #9ca3af; background: #f9fafb; }
+.opt.selected { border-color: #7F77DD; background: #EEEDFE; }
+.opt-letter { font-size: 12px; font-weight: 600; color: #9ca3af; min-width: 18px; padding-top: 2px; }
+.opt.selected .opt-letter { color: #534AB7; }
+.opt-text { font-size: 15px; color: #111827; line-height: 1.5; }
+
+/* Navigation */
+.nav { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; }
+.btn { padding: 12px 28px; border-radius: 10px; font-size: 15px; cursor: pointer; border: none; font-family: sans-serif; transition: opacity 0.2s; }
+.btn:disabled { opacity: 0.35; cursor: default; }
+.btn-primary { background: #7F77DD; color: white; }
+.btn-primary:hover:not(:disabled) { background: #6960c4; }
+.btn-ghost { background: transparent; color: #6b7280; border: 1px solid #e5e7eb; }
+.btn-ghost:hover { background: #f3f4f6; }
+.q-counter { font-size: 13px; color: #9ca3af; font-family: sans-serif; }
+
+/* Email gate */
+.gate-box { background: white; border: 1.5px solid #e5e7eb; border-radius: 16px; padding: 2rem; margin-top: 1rem; }
+.gate-box h2 { font-size: 22px; font-weight: normal; margin-bottom: 0.5rem; }
+.gate-box p { font-size: 15px; color: #6b7280; font-family: sans-serif; line-height: 1.6; margin-bottom: 1.5rem; }
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: 13px; color: #374151; font-family: sans-serif; margin-bottom: 0.4rem; font-weight: 500; }
+.form-group input { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 15px; font-family: sans-serif; outline: none; transition: border-color 0.15s; }
+.form-group input:focus { border-color: #7F77DD; }
+.privacy { font-size: 12px; color: #9ca3af; font-family: sans-serif; margin-top: 0.75rem; text-align: center; }
+.btn-full { width: 100%; margin-top: 1.25rem; padding: 14px; font-size: 16px; }
+.sending-msg { text-align: center; font-size: 14px; color: #6b7280; font-family: sans-serif; margin-top: 1rem; display: none; }
+
+/* Results */
+.result-header { text-align: center; margin-bottom: 2rem; }
+.drift-emoji { font-size: 48px; margin-bottom: 0.75rem; }
+.drift-label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: #9ca3af; font-family: sans-serif; margin-bottom: 0.4rem; }
+.drift-name { font-size: 30px; color: #1f1f1f; margin-bottom: 0.75rem; }
+.drift-tagline { font-size: 17px; color: #4b5563; font-family: sans-serif; line-height: 1.6; max-width: 480px; margin: 0 auto; }
+.result-card { background: white; border: 1.5px solid #e5e7eb; border-radius: 16px; padding: 1.75rem; margin-bottom: 1.25rem; }
+.result-card h3 { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; font-family: sans-serif; margin-bottom: 0.75rem; }
+.result-card p { font-size: 15px; color: #374151; font-family: sans-serif; line-height: 1.7; }
+.result-card ul { padding-left: 1.2rem; }
+.result-card ul li { font-size: 15px; color: #374151; font-family: sans-serif; line-height: 1.7; margin-bottom: 0.4rem; }
+.actions-list { list-style: none; padding: 0; }
+.actions-list li { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 0.75rem; font-size: 15px; color: #374151; font-family: sans-serif; line-height: 1.6; }
+.actions-list li::before { content: "→"; color: #7F77DD; flex-shrink: 0; margin-top: 2px; }
+.secondary-drift { background: #faf9f7; border: 1.5px solid #e5e7eb; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+.secondary-drift h3 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; font-family: sans-serif; margin-bottom: 0.4rem; }
+.secondary-drift p { font-size: 15px; color: #4b5563; font-family: sans-serif; line-height: 1.6; }
+.pdf-banner { background: #EEEDFE; border: 1.5px solid #c4bff5; border-radius: 14px; padding: 1.5rem; text-align: center; margin-top: 1.5rem; }
+.pdf-banner p { font-size: 15px; color: #374151; font-family: sans-serif; margin-bottom: 0.75rem; line-height: 1.6; }
+.pdf-banner .email-note { font-size: 13px; color: #7F77DD; font-family: sans-serif; }
+</style>
+</head>
+<body>
+<div class="quiz-wrap">
+  <div class="site-header">
+    <div class="tag">The Six Drifts</div>
+    <h1>Find your way back</h1>
+    <p>A 12-question quiz to discover which drift is pulling you away from yourself</p>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+  <!-- INTRO SCREEN -->
+  <div class="screen active" id="screen-intro">
+    <div class="gate-box">
+      <h2>Which drift is yours?</h2>
+      <p>Most people feel stuck, lost, or disconnected at some point. But not everyone drifts the same way. In 3 minutes, discover your drift type and what you can do about it today.</p>
+      <button class="btn btn-primary btn-full" onclick="startQuiz()">Start the quiz →</button>
+    </div>
+  </div>
+
+  <!-- QUESTION SCREENS (generated by JS) -->
+  <div id="question-container"></div>
+
+  <!-- EMAIL GATE -->
+  <div class="screen" id="screen-gate">
+    <div class="gate-box">
+      <h2>Your results are ready ✨</h2>
+      <p>Enter your name and email to see your drift type — and receive the full Six Drifts framework PDF as a free gift.</p>
+      <div class="form-group">
+        <label>Your first name</label>
+        <input type="text" id="userName" placeholder="e.g. Sara" />
+      </div>
+      <div class="form-group">
+        <label>Your email address</label>
+        <input type="email" id="userEmail" placeholder="e.g. sara@email.com" />
+      </div>
+      <button class="btn btn-primary btn-full" onclick="submitGate()">Show my results →</button>
+      <div class="sending-msg" id="sendingMsg">Sending your PDF… please wait a moment ✉️</div>
+      <p class="privacy">No spam. Just your results and one free PDF. Unsubscribe anytime.</p>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div class="screen" id="screen-results"></div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzs6xJn39Cljk49_CPdzmNA_CHSlL5OBypsXF6GfmBvHWcV7NU0-tyKzPP-hiLnTFJxJA/exec";
+
+const questions = [
+  {
+    text: "When you imagine your ideal life five years from now, you feel…",
+    options: [
+      { text: "Hopeful but not sure what it would actually look like for me", drifts: { Sleepwalker: 2, Juggler: 1 } },
+      { text: "Like I have ideas, but I keep editing them based on what others expect", drifts: { Pleaser: 2, Chameleon: 1 } },
+      { text: "Overwhelmed — there are too many possibilities and I can't choose", drifts: { Juggler: 2, Chameleon: 1 } },
+      { text: "Like I've stopped imagining. I just deal with what's in front of me", drifts: { Survivor: 2, Emptier: 1 } }
+    ]
+  },
+  {
+    text: "When you sense that someone around you is not happy with something you did or chose, you…",
+    options: [
+      { text: "Reconsider the choice, even if I was certain before", drifts: { Pleaser: 2, Chameleon: 1 } },
+      { text: "Feel guilty — maybe I'm being selfish or impractical", drifts: { Pleaser: 2, Survivor: 1 } },
+      { text: "Stand my ground, but it takes a lot of energy to do so", drifts: { Survivor: 2, Emptier: 1 } },
+      { text: "Shut down — I withdraw and stop engaging altogether", drifts: { Sleepwalker: 2, Emptier: 1 } }
+    ]
+  },
+  {
+    text: "Looking back at the last year, your relationship with your own desires has been…",
+    options: [
+      { text: "Blurry — I often can't tell what I want vs what I think I should want", drifts: { Chameleon: 2, Pleaser: 1 } },
+      { text: "Pushed aside — survival and responsibilities come first", drifts: { Survivor: 2, Emptier: 1 } },
+      { text: "Fragmented — I have many desires but can't commit to any one", drifts: { Juggler: 2, Chameleon: 1 } },
+      { text: "Quiet. I've stopped asking myself what I want", drifts: { Sleepwalker: 2, Emptier: 1 } }
+    ]
+  },
+  {
+    text: "How do you usually respond when you feel stuck or unfulfilled?",
+    options: [
+      { text: "I look for external validation or compare myself to others", drifts: { Pleaser: 2, Chameleon: 1 } },
+      { text: "I add more to my plate — maybe a new project will fix it", drifts: { Juggler: 2, Sleepwalker: 1 } },
+      { text: "I go into problem-solving mode and push through", drifts: { Survivor: 2, Emptier: 1 } },
+      { text: "I don't really respond. I just carry on and hope it passes", drifts: { Sleepwalker: 2, Emptier: 1 } }
+    ]
+  },
+  {
+    text: "When you think about who you are outside of your roles (parent, partner, professional)…",
+    options: [
+      { text: "My roles feel like my whole identity", drifts: { Pleaser: 2, Survivor: 1 } },
+      { text: "I used to know, but somewhere along the way I lost track", drifts: { Sleepwalker: 2, Emptier: 1 } },
+      { text: "I have many sides and I'm not sure which one is the 'real' me", drifts: { Chameleon: 2, Juggler: 1 } },
+      { text: "I know who I am, but I don't have space to live it", drifts: { Survivor: 2, Juggler: 1 } }
+    ]
+  },
+  {
+    text: "Your relationship with change is best described as…",
+    options: [
+      { text: "Fearful — I avoid it because I don't want to upset the people around me", drifts: { Pleaser: 2, Survivor: 1 } },
+      { text: "Chaotic — I start things but rarely finish before a new thing pulls me", drifts: { Juggler: 2, Chameleon: 1 } },
+      { text: "Reluctant — change feels like too much risk given my responsibilities", drifts: { Survivor: 2, Sleepwalker: 1 } },
+      { text: "Distant — I know I need to change but I don't feel motivated to start", drifts: { Sleepwalker: 2, Emptier: 1 } }
+    ]
+  },
+  {
+    text: "When you think about what truly matters to you, what feels most true?",
+    options: [
+      { text: "I know my values, but I often act against them to keep the peace", drifts: { Pleaser: 2, Chameleon: 1 } },
+      { text: "I adapt my values depending on the environment I'm in", drifts: { Chameleon: 2, Pleaser: 1 } },
+      { text: "My values feel like a luxury — right now I just need to survive", drifts: { Survivor: 2, Emptier: 1 } },
+      { text: "I have too many things I care about and I can't prioritise", drifts: { Juggler: 2, Sleepwalker: 1 } }
+    ]
+  },
+  {
+    text: "At the end of a typical day, you most often feel…",
+    options: [
+      { text: "Drained from trying to please or manage others' reactions", drifts: { Pleaser: 2, Survivor: 1 } },
+      { text: "Exhausted but unsure what I actually accomplished for myself", drifts: { Juggler: 2, Emptier: 1 } },
+      { text: "Numb or disconnected — I went through the motions again", drifts: { Sleepwalker: 2, Emptier: 1 } },
+      { text: "Tense — like I'm holding everything together but just barely", drifts: { Survivor: 2, Juggler: 1 } }
+    ]
+  },
+  {
+    text: "When you think about who you really are — the person you are when no one is watching…",
+    options: [
+      { text: "I'm not sure I know anymore. I've been so many things for so many people", drifts: { Pleaser: 2, Chameleon: 1 } },
+      { text: "I see different versions of myself depending on who I'm with — I can't tell which one is real", drifts: { Chameleon: 2, Juggler: 1 } },
+      { text: "I have glimpses of it, but I never have the time or space to just be that person", drifts: { Survivor: 2, Emptier: 1 } },
+      { text: "I stopped asking that question a long time ago. Life just took over", drifts: { Sleepwalker: 2, Emptier: 1 } }
+    ]
+  },
+  {
+    text: "When you imagine making a bold, meaningful change in your life…",
+    options: [
+      { text: "I worry about what others will think or how it will affect them", drifts: { Pleaser: 2, Survivor: 1 } },
+      { text: "I get excited but then wonder which of my many ideas to choose", drifts: { Juggler: 2, Chameleon: 1 } },
+      { text: "I feel like I can't afford the risk right now", drifts: { Survivor: 2, Sleepwalker: 1 } },
+      { text: "I don't feel excited. I feel tired even imagining it", drifts: { Emptier: 2, Sleepwalker: 1 } }
+    ]
+  },
+  {
+    text: "How do you feel about the idea of asking for what you need?",
+    options: [
+      { text: "Uncomfortable — I don't want to burden others or seem needy", drifts: { Pleaser: 2, Survivor: 1 } },
+      { text: "Confusing — I'm not always sure what I need", drifts: { Chameleon: 2, Sleepwalker: 1 } },
+      { text: "Pointless — even if I ask, nothing really changes", drifts: { Emptier: 2, Survivor: 1 } },
+      { text: "Overwhelming — there's too much I need and I don't know where to start", drifts: { Juggler: 2, Emptier: 1 } }
+    ]
+  },
+  {
+    text: "When you think about your personal growth over the past few years…",
+    options: [
+      { text: "I've grown, but mostly in ways that others needed from me", drifts: { Pleaser: 2, Survivor: 1 } },
+      { text: "I've explored a lot, but haven't gone deep in any one direction", drifts: { Juggler: 2, Chameleon: 1 } },
+      { text: "I feel like I've been on pause — managing life, not living it", drifts: { Sleepwalker: 2, Survivor: 1 } },
+      { text: "I've shrunk. I feel less like myself than I did a few years ago", drifts: { Emptier: 2, Pleaser: 1 } }
+    ]
+  }
+];
+
+const driftData = {
+  Pleaser: {
+    emoji: "🪞",
+    name: "The Pleaser",
+    tagline: "You've been so good at taking care of everyone else that you forgot to stay in the room for yourself.",
+    description: "You are warm, dependable, and deeply attuned to others. But somewhere along the way, 'being good' became more important than being real. You've learned to make yourself small — or at least shapeable — to keep things smooth.",
+    rootCause: "You learned early that love and safety come with conditions. Keeping others happy felt like the only way to stay connected, so you built a life around it — often without realising.",
+    signals: ["You say yes when you mean no", "You feel guilty when you prioritise yourself", "You're not sure what you actually want anymore — just what others want from you"],
+    wakeup: "You're living a life that works for everyone except you.",
+    actions: [
+      "Pause before you say yes. Ask yourself: 'Do I want this, or do I just want to avoid conflict?'",
+      "Name one boundary this week — and hold it, even if it feels uncomfortable",
+      "Write down 3 things you want that have nothing to do with anyone else's approval"
+    ]
+  },
+  Survivor: {
+    emoji: "🛡️",
+    name: "The Survivor",
+    tagline: "You've been strong for so long you've forgotten that strength isn't supposed to be a permanent state.",
+    description: "You are resilient, capable, and always ready to handle what comes next. But 'getting through it' has become your whole mode. You're always managing, never quite arriving.",
+    rootCause: "Life handed you real challenges — financial, relational, structural — and you rose to meet them. Now the crisis mode hasn't switched off, even when the crisis has passed.",
+    signals: ["You can't remember the last time you felt truly at ease", "You dismiss your own needs as indulgent", "Rest makes you anxious — stillness feels dangerous"],
+    wakeup: "Surviving is not the same as living. At some point, the armour becomes the prison.",
+    actions: [
+      "Name one thing you've been 'getting through' for too long — and ask: is the emergency still real?",
+      "Spend 10 minutes doing something that has no purpose except that it feels good",
+      "Tell one person something you need (not what you can manage — what you actually need)"
+    ]
+  },
+  Chameleon: {
+    emoji: "🌊",
+    name: "The Chameleon",
+    tagline: "You've become so good at adapting that you're no longer sure which version of you is actually yours.",
+    description: "You are perceptive, socially fluent, and extraordinarily good at reading a room. But you've used that gift to become whoever the situation seems to call for — and after years of shifting, the original feels hard to locate.",
+    rootCause: "You learned that fitting in was safer than standing out. Or maybe you genuinely loved exploring different versions of yourself — until the shifting stopped feeling like freedom and started feeling like shapelessness.",
+    signals: ["Different people in your life would describe you very differently", "You change your opinions based on who you're with", "You don't know what you think until you know what others think"],
+    wakeup: "If you can be anyone, it becomes very hard to be someone.",
+    actions: [
+      "Write down 5 opinions or preferences that are truly yours — not influenced by anyone around you",
+      "Stay in one point of view for a full conversation, even if you feel the pull to agree",
+      "Ask yourself: 'Who am I when no one is watching?'"
+    ]
+  },
+  Juggler: {
+    emoji: "🎪",
+    name: "The Juggler",
+    tagline: "You have so many real gifts that the hardest thing isn't starting — it's staying.",
+    description: "You are curious, multi-talented, and genuinely energised by ideas. But the abundance of what you're capable of has become its own kind of trap. You keep all the balls in the air — and never fully land anywhere.",
+    rootCause: "You may fear that committing to one thing means abandoning the others. Or that choosing means being defined — and being defined means being limited. So you stay beautifully, exhaustingly, unfinished.",
+    signals: ["You have a graveyard of started-but-never-finished projects", "You get bored or anxious when things stop being new", "You feel guilty for not doing more with your potential"],
+    wakeup: "Possibility is not the same as direction. At some point, everything interesting becomes nothing intentional.",
+    actions: [
+      "Pick one project and commit to it for 30 days — no new starts until then",
+      "Write down what you're afraid will happen if you choose just one thing",
+      "Ask yourself: 'What would I pursue if I couldn't start anything new for a year?'"
+    ]
+  },
+  Sleepwalker: {
+    emoji: "🌫️",
+    name: "The Sleepwalker",
+    tagline: "Life has been happening to you — and somewhere along the way, you stopped steering.",
+    description: "You're functioning. You're meeting your obligations. But when you pause and look up, you realise you don't quite know how you got here — and you're not sure you chose any of it.",
+    rootCause: "It wasn't one big decision. It was a thousand small ones — or rather, the absence of them. Comfort, habit, and the path of least resistance quietly replaced conscious choice.",
+    signals: ["Days feel repetitive and you're not sure what you're moving towards", "You feel vaguely dissatisfied but can't name why", "You tell yourself 'someday' — but someday never arrives"],
+    wakeup: "Comfort can be its own kind of cage. Moving without direction is still standing still.",
+    actions: [
+      "Ask yourself: 'If I could change one thing about my life today, what would it be?'",
+      "Do one thing this week that is slightly outside your routine — something you chose",
+      "Write a letter to yourself from the future: what do you wish you had started doing now?"
+    ]
+  },
+  Emptier: {
+    emoji: "🕯️",
+    name: "The Emptier",
+    tagline: "You've been giving and giving — and at some point, you stopped checking whether anything was coming back.",
+    description: "You used to feel more. More passion, more energy, more sense of self. Now there's a flatness where the aliveness used to be. You're still going — but the fuel is running very low.",
+    rootCause: "Years of giving more than you received — emotionally, professionally, personally — with not enough returned. It wasn't dramatic. It was gradual. A slow erosion.",
+    signals: ["Things that used to excite you now feel like effort", "You feel detached — like you're watching your own life from a distance", "You're tired in a way that sleep doesn't fix"],
+    wakeup: "Emptiness is not a character flaw. It's a signal. Something has been taken that needs to be restored.",
+    actions: [
+      "Name one thing that genuinely replenishes you — and do it this week, without guilt",
+      "Think about where your energy is going that it's not coming back from — and reduce that by 10%",
+      "Tell one trusted person: 'I've been running on empty. I need support.'"
+    ]
+  }
+};
+
+let scores = { Pleaser: 0, Survivor: 0, Chameleon: 0, Juggler: 0, Sleepwalker: 0, Emptier: 0 };
+let answers = [];
+let currentQ = 0;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+function startQuiz() {
+  renderQuestion(0);
+  updateProgress(0);
+}
+
+function renderQuestion(index) {
+  const container = document.getElementById('question-container');
+  const q = questions[index];
+  const letters = ['A','B','C','D'];
+  const savedAnswer = answers[index] !== undefined ? answers[index] : -1;
+
+  container.innerHTML = `
+    <div class="screen active" id="screen-q">
+      <div class="q-label">Question ${index + 1} of ${questions.length}</div>
+      <div class="q-text">${q.text}</div>
+      <div class="options">
+        ${q.options.map((opt, i) => `
+          <div class="opt ${savedAnswer === i ? 'selected' : ''}" onclick="selectOption(${i})" data-index="${i}">
+            <span class="opt-letter">${letters[i]}</span>
+            <span class="opt-text">${opt.text}</span>
+          </div>
+        `).join('')}
+      </div>
+      <div class="nav">
+        <button class="btn btn-ghost" onclick="goBack()" ${index === 0 ? 'style="visibility:hidden"' : ''}>← Back</button>
+        <span class="q-counter">${index + 1} / ${questions.length}</span>
+        <button class="btn btn-primary" id="nextBtn" onclick="goNext()" ${savedAnswer === -1 ? 'disabled' : ''}>
+          ${index === questions.length - 1 ? 'See my results →' : 'Next →'}
+        </button>
+      </div>
+    </div>
+  `;
+  showScreen('screen-q');
+  // hide container screens, show the q screen
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-q').classList.add('active');
+}
+
+function selectOption(i) {
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+  document.querySelectorAll('.opt')[i].classList.add('selected');
+  answers[currentQ] = i;
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function goNext() {
+  if (answers[currentQ] === undefined) return;
+  currentQ++;
+  updateProgress(currentQ);
+  if (currentQ >= questions.length) {
+    showScreen('screen-gate');
+  } else {
+    renderQuestion(currentQ);
+  }
+}
+
+function goBack() {
+  if (currentQ > 0) {
+    currentQ--;
+    updateProgress(currentQ);
+    renderQuestion(currentQ);
+  }
+}
+
+function updateProgress(q) {
+  const pct = (q / questions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function computeScores() {
+  scores = { Pleaser: 0, Survivor: 0, Chameleon: 0, Juggler: 0, Sleepwalker: 0, Emptier: 0 };
+  answers.forEach((ansIndex, qIndex) => {
+    const drifts = questions[qIndex].options[ansIndex].drifts;
+    for (const [drift, pts] of Object.entries(drifts)) {
+      scores[drift] += pts;
+    }
+  });
+}
+
+function getTopDrifts() {
+  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  return { primary: sorted[0][0], secondary: sorted[1][0] };
+}
+
+function submitGate() {
+  const name = document.getElementById('userName').value.trim();
+  const email = document.getElementById('userEmail').value.trim();
+  if (!name || !email) { alert('Please fill in both fields to continue.'); return; }
+  if (!email.includes('@')) { alert('Please enter a valid email address.'); return; }
+
+  computeScores();
+  const { primary, secondary } = getTopDrifts();
+
+  document.getElementById('sendingMsg').style.display = 'block';
+  document.querySelector('#screen-gate .btn-primary').disabled = true;
+
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('email', email);
+  formData.append('drift', primary);
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    body: formData
+  })
+  .then(() => showResults(name, primary, secondary))
+  .catch(() => showResults(name, primary, secondary));
+}
+
+function showResults(name, primary, secondary) {
+  updateProgress(questions.length);
+  const d = driftData[primary];
+  const sd = driftData[secondary];
+
+  const resultsEl = document.getElementById('screen-results');
+  resultsEl.innerHTML = `
+    <div class="result-header">
+      <div class="drift-emoji">${d.emoji}</div>
+      <div class="drift-label">Your drift type</div>
+      <div class="drift-name">${d.name}</div>
+      <div class="drift-tagline">${d.tagline}</div>
+    </div>
+
+    <div class="result-card">
+      <h3>What this looks like</h3>
+      <p>${d.description}</p>
+    </div>
+
+    <div class="result-card">
+      <h3>The root cause</h3>
+      <p>${d.rootCause}</p>
+    </div>
+
+    <div class="result-card">
+      <h3>How you might recognise it</h3>
+      <ul>${d.signals.map(s => `<li>${s}</li>`).join('')}</ul>
+    </div>
+
+    <div class="result-card">
+      <h3>The wake-up call</h3>
+      <p><em>${d.wakeup}</em></p>
+    </div>
+
+    <div class="result-card">
+      <h3>Three first actions</h3>
+      <ul class="actions-list">${d.actions.map(a => `<li>${a}</li>`).join('')}</ul>
+    </div>
+
+    <div class="secondary-drift">
+      <h3>Your secondary drift: ${sd.name} ${sd.emoji}</h3>
+      <p>${sd.tagline}</p>
+    </div>
+
+    <div class="pdf-banner">
+      <p>The full Six Drifts framework PDF has been sent to your email — with all six types, the confusion pairs, and the full awakening guide.</p>
+      <p class="email-note">Check your inbox (and spam folder, just in case) ✉️</p>
+    </div>
+  `;
+
+  showScreen('screen-results');
+}
+</script>
+</body>
+</html>
